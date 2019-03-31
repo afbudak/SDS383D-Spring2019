@@ -5,4 +5,5 @@ The works after Gaussian Processes are submitted in .html format. Click the link
 [Gaussian Process Simulation](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/GP_Simulation.html)
 
 [Point Wise Posterior](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/PointWise_Posterior.html)
+
 [Weather Data](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/weather.html)
