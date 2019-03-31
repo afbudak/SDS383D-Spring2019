@@ -1,0 +1,355 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Marginal Likelihood</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-03-31"><meta name="DC.source" content="Marginal_Likelihood.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Marginal Likelihood</h1><!--introduction--><p>Given <img src="Marginal_Likelihood_eq11111426207478312809.png" alt="$y_i = f(x_i) + \epsilon_i$" style="width:68px;height:11px;"> where f is a Gaussian Process prior under a covariance function C and <img src="Marginal_Likelihood_eq05605552166420212316.png" alt="$\epsilon_i \sim N(0, \sigma^2I)$" style="width:67px;height:12px;">. The marginal of y is <img src="Marginal_Likelihood_eq12793383700806597048.png" alt="$y \sim N(0,C + \sigma^2I)$" style="width:88px;height:12px;">.</p><!--/introduction--><p>The code below shows the marginal likelihood of y for given hyperparameters. A 2-d grid will be generated at the end to see the optimality trend for various values of hyperparameters.</p><pre class="codeinput">clear;
+<span class="comment">%Data Reading and Initial Clearing</span>
+data = csvread(<span class="string">'utilities.csv'</span>,1,0);
+x = data(:,1);
+y = data(:,2)./data(:,3);           <span class="comment">%bill per day</span>
+[x, idx] = sort(x);
+y = y(idx);
+n = length(y);
+tau2sq = 0;
+tau1sq_sweep = 15:100;
+b_sweep = 45:100;
+hyperparameters.tau2sq = tau2sq;
+covFunc = @CovSqExp;
+sigma = 1;
+mu = zeros(n,1);
+<span class="keyword">for</span> i = 1:length(tau1sq_sweep)
+    hyperparameters.tau1sq = tau1sq_sweep(i);
+    <span class="keyword">for</span> j = 1:length(b_sweep)
+        hyperparameters.b = b_sweep(j);
+        llog(i,j) = log( calc_likelihood(x, y, mu, covFunc, hyperparameters, sigma) );
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">%Extract Best Hyperparameter</span>
+[val1, idx1] = max(llog);
+[val2, idx2] = max(val1);
+b_best = b_sweep(idx2);
+tau1sq_best = tau1sq_sweep(idx1(idx2));
+xstar = sort(x);
+covFunc = @CovSqExp;
+res_new = gp_predict(x, y, xstar, covFunc, b_best, tau1sq_best, tau2sq, sigma);
+
+<span class="comment">%Contour Plotting</span>
+figure(1);
+contour(b_sweep, tau1sq_sweep, llog,30);
+hold <span class="string">on</span>;
+scatter(b_sweep(idx2), tau1sq_sweep(idx1(idx2)));
+legend(<span class="string">'contour lines'</span>, <span class="string">'optimal point'</span>);
+xlabel(<span class="string">'b values'</span>);
+ylabel(<span class="string">'tau1sq values'</span>);
+title(<span class="string">'optimal point =&gt; b=61 ; tau1sq=39'</span>);
+
+<span class="comment">%Plot with Best Hyperparameter</span>
+figure(2);
+scatter(x, y);
+hold <span class="string">on</span>;
+plot(xstar, res_new.mean);
+sigmas = sqrt(diag(res_new.var));
+CI_lb = res_new.mean - sigmas;
+CI_ub = res_new.mean + sigmas;
+hold <span class="string">on</span>;
+plot(xstar, CI_lb);
+hold <span class="string">on</span>;
+plot(xstar, CI_ub);
+title(<span class="string">'Conf Interval with Optimal Hyperparameter'</span>)
+</pre><p><b>Marginal Likelihood</b> Function for calculating likelihood given input, output and hyperparameters</p><pre class="codeinput"><span class="keyword">function</span> res = calc_likelihood(x, y, mu, covFunc, hyperparams, sigma)
+    n = length(mu);
+    b = hyperparams.b;
+    Tau1sq = hyperparams.tau1sq;
+    Tau2sq = hyperparams.tau2sq;
+    <span class="comment">%Build covariance function</span>
+    <span class="keyword">for</span> i = 1:n
+        <span class="keyword">for</span> j = 1:n
+            C(i,j) = covFunc(x(i), x(j), b, Tau1sq, Tau2sq);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    C = C + sigma * eye(n);
+    res = mvnpdf(y, mu, C);
+<span class="keyword">end</span>
+</pre><p><b>GP Function Definition</b></p><pre class="codeinput"><span class="keyword">function</span> res = gp_predict(x, y, xstar, covFunc, b, Tau1sq, Tau2sq, sigma)
+
+    <span class="comment">%Determine whether x is a vector or a matrix to determine the</span>
+    <span class="comment">%dimensionality of the given data.</span>
+    <span class="keyword">if</span> ~isvector(x)
+        n1 = size(x,2);
+    <span class="keyword">else</span>
+        n1 = length(x);
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> ~isvector(xstar)
+        n2 = size(xstar,2);
+    <span class="keyword">else</span>
+        n2 = length(xstar);
+    <span class="keyword">end</span>
+
+    <span class="comment">%Calculate covariance matrixes where C is the covariance for observed</span>
+    <span class="comment">%data; Cx is the covariance between the observed and prediction data</span>
+    <span class="comment">%and Cxx is the covariance matrix between unobserved (prediction) data</span>
+    <span class="comment">%input.</span>
+    <span class="keyword">for</span> i = 1:n1
+        <span class="keyword">for</span> j = 1:n1
+            C(i,j) = covFunc(x(i), x(j), b, Tau1sq, Tau2sq);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">for</span> i = 1:n1
+        <span class="keyword">for</span> j = 1:n2
+            Cx(i,j) = covFunc(x(i), xstar(j), b, Tau1sq, Tau2sq);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    CxT = transpose(Cx);
+
+    <span class="keyword">for</span> i = 1:n2
+        <span class="keyword">for</span> j = 1:n2
+            Cxx(i,j) = covFunc(xstar(i), xstar(j), b, Tau1sq, Tau2sq);
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%Implement posterior solution for noisy observation. sigma shall be</span>
+    <span class="comment">%zero if the observations are noise-free.</span>
+    noise = sigma*eye(n1);
+    post_mean = CxT / (C + noise) * y;
+    post_var = Cxx - (CxT / (C + noise)) * Cx;
+    res.mean = post_mean;
+    res.var = post_var;
+
+<span class="keyword">end</span>
+</pre><p><b>Covariance Functions</b></p><pre class="codeinput"><span class="keyword">function</span> res = CovSqExp(x1, x2, b, tau1sq, tau2sq)
+    dist = norm(x1 - x2);
+    kronecker = isequal(x1, x2);
+    res = tau1sq * exp( -0.5 * (dist/b)^2 ) + tau2sq *kronecker;
+<span class="keyword">end</span>
+
+<span class="keyword">function</span> res = CovMat52(x1, x2, b, tau1sq, tau2sq)
+    dist = norm(x1 - x2);
+    kronecker = isequal(x1, x2);
+    expterm = exp(-sqrt(5)*dist/b);
+    taylorterm = 1 + sqrt(5)*dist/b + 5 * dist^2/(3*b^2);
+    res = tau1sq*taylorterm*expterm + tau2sq*kronecker;
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="contour.png" alt=""> <img vspace="5" hspace="5" src="conf_int.png" alt=""> <img vspace="5" hspace="5" src="GP_03.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Marginal Likelihood
+% Given $y_i = f(x_i) + \epsilon_i$ where f is a Gaussian Process prior
+% under a covariance function C and $\epsilon_i \sim N(0, \sigma^2I)$. The
+% marginal of y is $y \sim N(0,C + \sigma^2I)$.
+
+%%
+% The code below shows the marginal likelihood of y for given
+% hyperparameters. A 2-d grid will be generated at the end to see the
+% optimality trend for various values of hyperparameters.
+
+clear;
+%Data Reading and Initial Clearing
+data = csvread('utilities.csv',1,0);
+x = data(:,1);
+y = data(:,2)./data(:,3);           %bill per day
+[x, idx] = sort(x);
+y = y(idx);
+n = length(y);
+tau2sq = 0;
+tau1sq_sweep = 15:100;
+b_sweep = 45:100;
+hyperparameters.tau2sq = tau2sq;
+covFunc = @CovSqExp;
+sigma = 1;
+mu = zeros(n,1);
+for i = 1:length(tau1sq_sweep)
+    hyperparameters.tau1sq = tau1sq_sweep(i);
+    for j = 1:length(b_sweep)
+        hyperparameters.b = b_sweep(j);
+        llog(i,j) = log( calc_likelihood(x, y, mu, covFunc, hyperparameters, sigma) );
+    end
+end
+
+%Extract Best Hyperparameter
+[val1, idx1] = max(llog);
+[val2, idx2] = max(val1);
+b_best = b_sweep(idx2);
+tau1sq_best = tau1sq_sweep(idx1(idx2));
+xstar = sort(x);
+covFunc = @CovSqExp;
+res_new = gp_predict(x, y, xstar, covFunc, b_best, tau1sq_best, tau2sq, sigma);
+
+%Contour Plotting
+figure(1);
+contour(b_sweep, tau1sq_sweep, llog,30);
+hold on;
+scatter(b_sweep(idx2), tau1sq_sweep(idx1(idx2)));
+legend('contour lines', 'optimal point');
+xlabel('b values');
+ylabel('tau1sq values');
+title('optimal point => b=61 ; tau1sq=39');
+
+%Plot with Best Hyperparameter
+figure(2);
+scatter(x, y);
+hold on;
+plot(xstar, res_new.mean);
+sigmas = sqrt(diag(res_new.var));
+CI_lb = res_new.mean - sigmas;
+CI_ub = res_new.mean + sigmas;
+hold on;
+plot(xstar, CI_lb);
+hold on;
+plot(xstar, CI_ub);
+title('Conf Interval with Optimal Hyperparameter')
+
+%% 
+% *Marginal Likelihood*
+% Function for calculating likelihood given input, output and
+% hyperparameters
+function res = calc_likelihood(x, y, mu, covFunc, hyperparams, sigma)
+    n = length(mu);
+    b = hyperparams.b;
+    Tau1sq = hyperparams.tau1sq;
+    Tau2sq = hyperparams.tau2sq;
+    %Build covariance function
+    for i = 1:n
+        for j = 1:n
+            C(i,j) = covFunc(x(i), x(j), b, Tau1sq, Tau2sq);
+        end
+    end
+    C = C + sigma * eye(n);
+    res = mvnpdf(y, mu, C);
+end
+
+
+%% 
+% *GP Function Definition*
+
+function res = gp_predict(x, y, xstar, covFunc, b, Tau1sq, Tau2sq, sigma)
+
+    %Determine whether x is a vector or a matrix to determine the
+    %dimensionality of the given data.
+    if ~isvector(x)
+        n1 = size(x,2);
+    else
+        n1 = length(x);
+    end
+    
+    if ~isvector(xstar)
+        n2 = size(xstar,2);
+    else
+        n2 = length(xstar);
+    end
+    
+    %Calculate covariance matrixes where C is the covariance for observed
+    %data; Cx is the covariance between the observed and prediction data
+    %and Cxx is the covariance matrix between unobserved (prediction) data
+    %input.
+    for i = 1:n1
+        for j = 1:n1
+            C(i,j) = covFunc(x(i), x(j), b, Tau1sq, Tau2sq);
+        end
+    end
+    
+    for i = 1:n1
+        for j = 1:n2
+            Cx(i,j) = covFunc(x(i), xstar(j), b, Tau1sq, Tau2sq);
+        end
+    end
+    CxT = transpose(Cx);
+    
+    for i = 1:n2
+        for j = 1:n2
+            Cxx(i,j) = covFunc(xstar(i), xstar(j), b, Tau1sq, Tau2sq);
+        end
+    end
+    
+    %Implement posterior solution for noisy observation. sigma shall be
+    %zero if the observations are noise-free.
+    noise = sigma*eye(n1);
+    post_mean = CxT / (C + noise) * y;
+    post_var = Cxx - (CxT / (C + noise)) * Cx;
+    res.mean = post_mean;
+    res.var = post_var;
+        
+end
+
+%%
+% *Covariance Functions*
+function res = CovSqExp(x1, x2, b, tau1sq, tau2sq)
+    dist = norm(x1 - x2);
+    kronecker = isequal(x1, x2);
+    res = tau1sq * exp( -0.5 * (dist/b)^2 ) + tau2sq *kronecker;
+end
+
+function res = CovMat52(x1, x2, b, tau1sq, tau2sq)
+    dist = norm(x1 - x2);
+    kronecker = isequal(x1, x2);
+    expterm = exp(-sqrt(5)*dist/b);
+    taylorterm = 1 + sqrt(5)*dist/b + 5 * dist^2/(3*b^2);
+    res = tau1sq*taylorterm*expterm + tau2sq*kronecker;
+end
+##### SOURCE END #####
+--></body></html>
