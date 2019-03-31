@@ -6,6 +6,6 @@ The works after Gaussian Processes are submitted in .html format. Click the link
 
 [Point Wise Posterior](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/PointWise_Posterior.html)
 
-[Marginal Likelihood](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/Marginal_Likelihood.html)
+[Marginal Likelihood](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/Marginal_Likelihoodd.html)
 
 [Weather Data](http://htmlpreview.github.io/?https://github.com/afbudak/SDS383D-Spring2019/blob/master/Exercises3/weather.html)
